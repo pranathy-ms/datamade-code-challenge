@@ -91,8 +91,8 @@ export default function RestaurantPermitMap() {
     layer.setStyle({
       fillColor: getColor(percentage),
       fillOpacity: 0.7,
-      color: "white",  // border color
-      weight: 1,       // border width
+      color: "black",  // border color — changed from white to black for visible area boundaries
+      weight: 1.5,     // border width
     })
 
     // show a popup on hover with the area name and permit count
