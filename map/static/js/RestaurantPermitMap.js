@@ -45,34 +45,61 @@ export default function RestaurantPermitMap() {
   const yearlyDataEndpoint = `/map-data/?year=${year}`
 
   useEffect(() => {
-    fetch()
+    // fetch() with no args was broken — now passes the endpoint URL
+    // fetch(yearlyDataEndpoint) re-runs whenever year changes (see dependency array)
+    fetch(yearlyDataEndpoint)
       .then((res) => res.json())
       .then((data) => {
-        /**
-         * TODO: Fetch the data needed to supply to map with data
-         */
+        // store the API response in state so the map can use it
+        setCurrentYearData(data)
       })
   }, [yearlyDataEndpoint])
 
 
+  // total permits across all areas for the selected year
+  const totalPermits = currentYearData.reduce((sum, area) => sum + area.num_permits, 0)
+
+  // highest permit count in any single area — used for shading and the UI stat
+  // guard against empty array: Math.max() with no args returns -Infinity
+  const maxNumPermits =
+    currentYearData.length > 0
+      ? Math.max(...currentYearData.map((area) => area.num_permits))
+      : 0
+
   function getColor(percentageOfPermits) {
-    /**
-     * TODO: Use this function in setAreaInteraction to set a community 
-     * area's color using the communityAreaColors constant above
-     */
+    // divide 0-100% into 4 equal buckets, each mapped to a shade of blue
+    // communityAreaColors goes from lightest (#eff3ff) to darkest (#2171b5)
+    if (percentageOfPermits > 75) return communityAreaColors[3]
+    if (percentageOfPermits > 50) return communityAreaColors[2]
+    if (percentageOfPermits > 25) return communityAreaColors[1]
+    return communityAreaColors[0]
   }
 
   function setAreaInteraction(feature, layer) {
-    /**
-     * TODO: Use the methods below to:
-     * 1) Shade each community area according to what percentage of 
-     * permits were issued there in the selected year
-     * 2) On hover, display a popup with the community area's raw 
-     * permit count for the year
-     */
-    layer.setStyle()
-    layer.on("", () => {
-      layer.bindPopup("")
+    // feature.properties.community is uppercase e.g. "ROGERS PARK"
+    // currentYearData area.name is title case e.g. "Rogers Park"
+    // compare lowercase to match them reliably
+    const areaData = currentYearData.find(
+      (area) =>
+        area.name.toLowerCase() === feature.properties.community.toLowerCase()
+    )
+
+    const numPermits = areaData ? areaData.num_permits : 0
+
+    // shade the area relative to the busiest area this year
+    const percentage = maxNumPermits > 0 ? (numPermits / maxNumPermits) * 100 : 0
+    layer.setStyle({
+      fillColor: getColor(percentage),
+      fillOpacity: 0.7,
+      color: "white",  // border color
+      weight: 1,       // border width
+    })
+
+    // show a popup on hover with the area name and permit count
+    layer.on("mouseover", () => {
+      layer.bindPopup(
+        `<strong>${feature.properties.community}</strong><br>Permits: ${numPermits}`
+      )
       layer.openPopup()
     })
   }
@@ -81,11 +108,10 @@ export default function RestaurantPermitMap() {
     <>
       <YearSelect filterVal={year} setFilterVal={setYear} />
       <p className="fs-4">
-        Restaurant permits issued this year: {/* TODO: display this value */}
+        Restaurant permits issued this year: {totalPermits}
       </p>
       <p className="fs-4">
-        Maximum number of restaurant permits in a single area:
-        {/* TODO: display this value */}
+        Maximum number of restaurant permits in a single area: {maxNumPermits}
       </p>
       <MapContainer
         id="restaurant-map"
