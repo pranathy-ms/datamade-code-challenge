@@ -1,5 +1,29 @@
 # Implementation Notes
 
+## How to run the app
+
+**Prerequisites:** [Docker Desktop](https://docs.docker.com/get-started/get-docker/) must be installed and running.
+
+```bash
+# 1. Build the containers
+docker compose build
+
+# 2. Load the Chicago restaurant permit and community area data
+docker compose run --rm app python manage.py loaddata map/fixtures/restaurant_permits.json map/fixtures/community_areas.json
+
+# 3. Start the app
+docker compose up
+```
+
+Visit http://localhost:8000 to view the map.
+
+**To run tests:**
+```bash
+docker compose -f docker-compose.yml -f tests/docker-compose.yml run --rm app
+```
+
+---
+
 ## Step 1: Serializer — Counting permits per community area
 
 A user request for a particular year is received by `MapDataView`, which uses `CommunityAreaSerializer` to get the count of restaurant permits issued in that year for each community area. The serializer's `get_num_permits` method does this using a Django ORM filter on the `RestaurantPermit` model, narrowed by both `community_area_id` and `issue_date__year`.
