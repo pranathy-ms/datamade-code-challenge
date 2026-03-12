@@ -34,8 +34,16 @@ def test_map_data_view():
 
     # Query the map data endpoint
     client = APIClient()
-    response = client.get(reverse("map_data", query={"year": 2021}))
+    # WAS: client.get(reverse("map_data", query={"year": 2021}))
+    # BUG: reverse() does not accept a query argument — it only builds URL paths
+    # FIX: pass query params as the second argument to client.get() instead
+    response = client.get(reverse("map_data"), {"year": 2021})
 
-    # TODO: Complete the test by asserting that the /map-data/ endpoint
-    # returns the correct number of permits for Beverly and Lincoln 
-    # Park in 2021
+    assert response.status_code == 200
+
+    # WAS: no assertions (TODO left incomplete)
+    # NOW: convert response list to a dict keyed by name for easy lookup,
+    # then assert each area has the expected permit count
+    counts = {area["name"]: area["num_permits"] for area in response.data}
+    assert counts["Beverly"] == 2       # 2 permits created above
+    assert counts["Lincoln Park"] == 3  # 3 permits created above

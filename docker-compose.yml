@@ -41,6 +41,9 @@ services:
   postgres:
     container_name: map-postgres
     image: postgis/postgis
+    # postgis/postgis:latest does not publish an ARM64 image, so we force
+    # AMD64 emulation to support Apple Silicon (M1/M2/M3) Macs
+    platform: linux/amd64
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s

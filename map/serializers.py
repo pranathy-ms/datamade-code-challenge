@@ -11,24 +11,14 @@ class CommunityAreaSerializer(serializers.ModelSerializer):
     num_permits = serializers.SerializerMethodField()
 
     def get_num_permits(self, obj):
-        """
-        TODO: supplement each community area object with the number
-        of permits issued in the given year.
-
-        e.g. The endpoint /map-data/?year=2017 should return something like:
-        [
-            {
-                "ROGERS PARK": {
-                    area_id: 17,
-                    num_permits: 2
-                },
-                "BEVERLY": {
-                    area_id: 72,
-                    num_permits: 2
-                },
-                ...
-            }
-        ]
-        """
-
-        pass
+        # WAS: pass (unimplemented stub)
+        # NOW: counts RestaurantPermit rows for this community area in the requested year
+        #
+        # The year comes from the serializer's context, which MapDataView sets from
+        # the ?year= query param. issue_date__year is Django ORM syntax that extracts
+        # just the year part of a DateField for filtering.
+        year = self.context.get("year")
+        return RestaurantPermit.objects.filter(
+            community_area_id=obj.area_id,
+            issue_date__year=year,
+        ).count()
